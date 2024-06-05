@@ -4,7 +4,7 @@ import numpy
 import scipy
 import scipy.linalg
 
-import cambWrapTools
+#import cambWrapTools
 import classWrapTools
 
 # utilities for dictionaries
@@ -205,7 +205,7 @@ def getPowerDerivWithParams(cosmoFid, stepSizes, polCombs, cmbNoiseSpectraK, def
 
     nParams = len(paramsToDifferentiate)
 
-    oneSidedParams = ['DM_Pann']
+    oneSidedParams = ['DM_Pann', 'pann']
 
     if 'mnu' in cosmoFid.keys():
         if cosmoFid['mnu'] < stepSizes['mnu']:
@@ -1007,7 +1007,7 @@ def getSecondPowerDerivWithParams(cosmoFid, stepSizes, polCombs, cmbNoiseSpectra
 
 
     nParams = len(paramsToDifferentiate)
-    oneSidedParams = ['DM_Pann']
+    oneSidedParams = ['DM_Pann', 'pann']
     if 'mnu' in cosmoFid.keys():
         if cosmoFid['mnu'] < stepSizes['mnu']:
             oneSidedParams.append('mnu')

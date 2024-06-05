@@ -1,11 +1,11 @@
 import os
 import numpy as np
-import cambWrapTools
+#import cambWrapTools
+import subprocess as sp
+
+DEBUG_CLASS_DELENS_INI = True
 
 TCMB = 2.7255  ## CMB temperature in K
-
-
-
 
 def class_generate_data(cosmo,
                         rootName = 'testing',
@@ -32,11 +32,42 @@ def class_generate_data(cosmo,
     if not os.path.exists(classDataDir + 'output/'):
         os.makedirs(classDataDir + 'output/')
 
+    SCATTER = 'omega_dmeff' in cosmo.keys()
+    if SCATTER:
+        print('scattering!')
+
     ########################################################
     ## Convert cosmological parameters to CLASS format    ##
     ########################################################
 
     cosmoclass = dict()
+
+    # SCATTERING MODIFICATION
+    if SCATTER:
+        cosmoclass.update({
+            'omega_cdm': 0,
+        })
+        for k in ('omega_dmeff', 'omega_b', 'm_dmeff', 'log10sigma_dmeff'):
+            if k in cosmo.keys():
+                cosmoclass[k] = cosmo[k]
+    else:
+        cosmoclass['omega_b'] = cosmo['omega_b_h2']
+        cosmoclass['omega_cdm'] = cosmo['omega_c_h2']
+
+
+
+    # PANN MODIFICATION
+    if 'pann' in cosmo.keys():
+        cosmoclass['DM_annihilation_efficiency'] = cosmo['pann']
+        #if cosmo['pann'] > 0:
+        #    cosmoclass.update({
+        #            'DM_annihilation_variation': 0,#-1.73e-5,
+        #            'DM_annihilation_z': 600,
+        #            'DM_annihilation_zmax': 2500,
+        #            'DM_annihilation_zmin': 30
+        #        })
+
+
 
     if 'H0' in list(cosmo.keys()):
         cosmoclass['H0'] = cosmo['H0']
@@ -45,8 +76,6 @@ def class_generate_data(cosmo,
     elif 'theta_s' in list(cosmo.keys()):
         cosmoclass['100*theta_s']= 100.*cosmo['theta_s']
 
-    cosmoclass['omega_b'] = cosmo['omega_b_h2']
-    cosmoclass['omega_cdm'] = cosmo['omega_c_h2']
     if 'A_s' in list(cosmo.keys()):
         cosmoclass['A_s'] = cosmo['A_s']
     elif 'logA' in list(cosmo.keys()):
@@ -286,16 +315,16 @@ def class_generate_data(cosmo,
     dcode = dict()
 
     dcode['root'] = classDataDir + 'output/' + rootName #+ '_'
-    dcode['output'] = 'tCl,pCl,lCl,dlCl'
+    dcode['output'] = 'tCl,pCl,lCl,dlCl' if not SCATTER else 'tCl,pCl,lCl,dlCl'
     dcode['modes'] = 's'
-    dcode['lensing'] = 'yes'
+    dcode['lensing'] = 'yes' if not SCATTER else 'yes'
     dcode['non linear'] = 'hmcode'
     if dcode['non linear'] == 'hmcode' and 'eta_0' in list(cosmo.keys()):
         cosmoclass['eta_0'] = cosmo['eta_0']
     if dcode['non linear'] == 'hmcode' and 'c_min' in list(cosmo.keys()):
         cosmoclass['c_min'] = cosmo['c_min']
     dcode['l_max_scalars'] = lmax
-    dcode['delta_l_max'] = 2000
+    dcode['delta_l_max'] = 5000-lmax
     dcode['delta_dl_max'] = 0
     dcode['format'] = 'class'
     dcode['accurate_lensing'] = 1
@@ -366,7 +395,14 @@ def class_generate_data(cosmo,
         np.savetxt(classDataDir  + 'input/' + rootName + '_defl_noise.dat', np.column_stack((np.arange(len(deflectionNoise))+2, deflectionNoise)) )
         dcode['command_for_lens_recon_noise_spec'] = 'cat ' + classDataDir  + 'input/' + rootName + '_defl_noise.dat'
 
-    if externalUnlensedCMBSpectra is None:
+
+    # UNLENSED
+    if SCATTER:
+        dcode['cmb spectra type'] = 'external'
+
+        dcode['command_for_external_cmb_spectra'] = 'cat ' + classDataDir + 'output/' + rootName + '_cl_reorder.dat'
+        print('Shoving scattering spectra into CLASS_delens from', classDataDir + 'output/' + rootName + '_cl_reorder.dat')
+    elif externalUnlensedCMBSpectra is None:
         ## If unlensed spectra are not provided, calculate spectra with CLASS
         dcode['cmb spectra type']  = 'internal'
     else:
@@ -385,12 +421,20 @@ def class_generate_data(cosmo,
             stop
         dcode['cmb spectra type']  = 'external'
         np.savetxt(classDataDir  + 'input/' + rootName + '_unlensed_input_spectra.dat', \
-            np.column_stack((externalUnlensedCMBSpectra['l'], externalUnlensedCMBSpectra['cl_TT'], \
+            np.column_stack(
+                (externalUnlensedCMBSpectra['l'], externalUnlensedCMBSpectra['cl_TT'], \
             externalUnlensedCMBSpectra['cl_TE'], externalUnlensedCMBSpectra['cl_EE'], \
             externalUnlensedCMBSpectra['cl_BB'], externalLensingSpectra['cl_phiphi'] )) )
         dcode['command_for_external_cmb_spectra'] = 'cat ' + classDataDir  + 'input/' + rootName + '_unlensed_input_spectra.dat'
 
-    if externalLensedCMBSpectra is None:
+    # LENSED
+    if SCATTER:
+        # LOC37377
+        #dcode['lensed cmb spectra type'] = 'internal'
+
+        #dcode['command_for_external_lensed_cmb_spectra'] = 'cat ' + classDataDir + 'output/' + rootName + '_cl_lensed_reorder.dat'
+        pass
+    elif externalLensedCMBSpectra is None:
         ## If lensed spectra are not provided, calculate spectra with CLASS
         dcode['lensed cmb spectra type']  = 'internal'
     else:
@@ -455,13 +499,53 @@ def class_generate_data(cosmo,
 ## the CMB and lensing noise used to create these.    ##
 ########################################################
 
-    with open(classDataDir  + 'input/' + rootName + ".ini", "w") as f:
-        f.write( '\n'.join(['%s = %s' % (k, v) for k, v in list(cosmoclass.items())])
-                +'\n'
-                +'\n'.join(['%s = %s' % (k, v) for k, v in list(dcode.items())]))
+    if SCATTER:
+        with open(classDataDir  + 'input/' + rootName + "_class_scatter.ini", "w") as f:
+            f.write('\n'.join(['%s = %s' % (k, v) for k, v in cosmoclass.items()]))
+            f.write("""
+# THIS IS WHAT THE SCATTERING CODE TAKES IN
+output = tCl,pCl,lCl,dlCl
+modes = s
+lensing = yes
+root = /Users/yovel/Desktop/fisher_test/FisherLens/CLASS_delens/data/Node_0/output/scatter_
+overwrite_root = yes
+l_max_scalars = 5000
+            """)
+        with open(classDataDir + 'input/' + rootName + "_class_delens.ini", "w") as f:
+            f.write('\n'.join(['%s = %s' % (k, v) for k, v in dcode.items()]))
+
+        print('Starting scatter...')
+        #raise StopIteration
+        scatter_proc = sp.run(['./class_scatter', classDataDir + 'input/' + rootName + "_class_scatter.ini"], cwd=classExecDir, stdout=sp.PIPE, stderr=sp.PIPE, check=True)
+        #print(scatter_proc.stdout)
+        #print(scatter_proc.stderr)
+
+        # REORDER LENSED SPECTRA (we will not input lensed spectra, it will be internal (?), cmd+f LOC37377)
+        """spectra = np.loadtxt(classDataDir + 'output/' + rootName + '_cl_lensed.dat')
+        np.savetxt(classDataDir + 'output/' + rootName + '_cl_lensed_reorder.dat',
+                   np.column_stack(
+                       (spectra[:, 0], spectra[:, 1], spectra[:, 3], spectra[:, 2], spectra[:, 4], spectra[:, 5])))"""
+        # REORDER UNLENSED SPECTRA
+        spectra = np.loadtxt(classDataDir + 'output/' + rootName + '_cl.dat')
+        np.savetxt(classDataDir + 'output/' + rootName + '_cl_reorder.dat',
+                   np.column_stack(
+                       (spectra[:, 0], spectra[:, 1], spectra[:, 3], spectra[:, 2], spectra[:, 4], spectra[:, 5])
+                   ))
 
 
-    os.system("cd " + classExecDir + " ; ./class " + classDataDir + 'input/' + rootName + ".ini")
+        print('Starting delens...')
+        if DEBUG_CLASS_DELENS_INI:
+            raise Exception(f'Stopping so you can look at what just happened. Run [./class /Users/yovel/Desktop/fisher_test/FisherLens/CLASS_delens/data/Node_0/input/scatter_class_delens.ini]. Check input/{rootName}_class_delens.ini and output/{rootName}_defl_noise.dat')
+        delens_proc = sp.run(['./class', classDataDir + 'input/' + rootName + "_class_delens.ini"], cwd=classExecDir,
+                         stdout=sp.PIPE, stderr=sp.PIPE, check=True)
+
+    else:
+        with open(classDataDir  + 'input/' + rootName + ".ini", "w") as f:
+            f.write( '\n'.join(['%s = %s' % (k, v) for k, v in cosmoclass.items()])
+                    +'\n'
+                    +'\n'.join(['%s = %s' % (k, v) for k, v in dcode.items()]))
+
+        os.system("cd " + classExecDir + " ; ./class " + classDataDir + 'input/' + rootName + ".ini")
 
 ########################################################
 ## Filling the spectra into specific CLASS dict()s.   ##
