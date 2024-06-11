@@ -11,9 +11,9 @@ TAU_PRIOR = True
 PANN = r'$p_{\mathrm{ann}}$ ($10^{-7}\mathrm{m}^3\mathrm{s}^{-1}\mathrm{kg}^{-1}$)'
 
 if SCATTER:
-    data = np.load('/Users/yovel/Desktop/fisher_test/FisherLens/CLASS_delens/results/scatter.pkl', allow_pickle=True)
+    data = np.load('CLASS_delens/results/scatter.pkl', allow_pickle=True)
 elif ANN:
-    data = np.load('/Users/yovel/Desktop/fisher_test/FisherLens/CLASS_delens/results/ann.pkl', allow_pickle=True)
+    data = np.load('CLASS_delens/results/ann.pkl', allow_pickle=True)
 else:
     raise Exception('bro?')
 print(data['fisherGaussian'])

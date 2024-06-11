@@ -52,9 +52,9 @@ lmax_calc = lmax+lbuffer
 expNamesThisNode = numpy.array_split(numpy.asarray(expNames), size)[rank]
 
 # Directory where CLASS_delens is located
-classExecDir = '/Users/yovel/Desktop/fisher_test/FisherLens/CLASS_delens/class_delens'
+classExecDir = 'CLASS_delens/class_delens/'
 # Directory where you would like the output
-classDataDir = '/Users/yovel/Desktop/fisher_test/FisherLens/CLASS_delens/'
+classDataDir = 'CLASS_delens/'
 outputDir = classDataDir + 'results/'
 
 classDataDirThisNode = classDataDir + 'data/Node_' + str(rank) + '/'
