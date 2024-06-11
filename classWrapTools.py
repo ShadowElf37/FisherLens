@@ -4,14 +4,16 @@ import numpy as np
 import subprocess as sp
 import platform
 
-DEBUG_CLASS_DELENS_INI = True
+DEBUG_CLASS_DELENS_INI = False
 
 NONLINEAR = False
+
+INTERNAL_SCATTER_CL = True
 
 TCMB = 2.7255  ## CMB temperature in K
 
 def start_class_subproc(ini_path, cwd, version='class_scatter_nl'):
-    """Version should be class, class_scatter_dl"""
+    """Version should be class_delens, class_scatter_dl"""
     os = platform.system()
     print(' '.join(['wsl', './'+cwd+version, ini_path]))
     try:
@@ -357,7 +359,7 @@ def class_generate_data(cosmo,
     dcode['l_max_scalars'] = lmax
     dcode['delta_l_max'] = 5000-lmax
     dcode['delta_dl_max'] = 0
-    dcode['format'] = 'class'
+    dcode['format'] = 'class_delens'
     dcode['accurate_lensing'] = 1
     dcode['headers'] = 'yes'
     dcode['output_spectra_noise'] = 'yes'
@@ -429,12 +431,13 @@ def class_generate_data(cosmo,
 
     # UNLENSED
     if SCATTER:
-        #dcode['cmb spectra type'] = 'internal'
-        #print('internal delensing with scatter_dl')
-
-        dcode['cmb spectra type'] = 'external'
-        dcode['command_for_external_cmb_spectra'] = 'cat ' + classDataDir + 'output/' + rootName + '_cl_reorder.dat'
-        print('Shoving scattering spectra into CLASS_delens from', classDataDir + 'output/' + rootName + '_cl_reorder.dat')
+        if INTERNAL_SCATTER_CL:
+            dcode['cmb spectra type'] = 'internal'
+            print('internal delensing with scatter_dl')
+        else:
+            dcode['cmb spectra type'] = 'external'
+            dcode['command_for_external_cmb_spectra'] = 'cat ' + classDataDir + 'output/' + rootName + '_cl_reorder.dat'
+            print('Shoving scattering spectra into CLASS_delens from', classDataDir + 'output/' + rootName + '_cl_reorder.dat')
     elif externalUnlensedCMBSpectra is None:
         ## If unlensed spectra are not provided, calculate spectra with CLASS
         dcode['cmb spectra type']  = 'internal'
@@ -535,43 +538,49 @@ def class_generate_data(cosmo,
     if SCATTER:
         with open(classDataDir  + 'input/' + rootName + "_class_scatter.ini", "w") as f:
             f.write('\n'.join(['%s = %s' % (k, v) for k, v in cosmoclass.items()]))
-            f.write("""
-# THIS IS WHAT THE SCATTERING CODE TAKES IN, PLEASE UPDATE WITH dlCl IF THATS NEEDED POST-MERGE
-output = tCl,pCl,lCl
-modes = s
-lensing = yes
-root = CLASS_delens/data/Node_0/output/scatter_
-overwrite_root = yes
-l_max_scalars = 5000
-            """)
-        with open(classDataDir + 'input/' + rootName + "_class_delens.ini", "w") as f:
-            f.write('\n'.join(['%s = %s' % (k, v) for k, v in dcode.items()]))
+            f.write('\n')
+            if INTERNAL_SCATTER_CL:
+                f.write('\n'.join(['%s = %s' % (k, v) for k, v in dcode.items()]))
+
+            else:
+                f.write("""
+    # THIS IS WHAT THE SCATTERING CODE TAKES IN, PLEASE UPDATE WITH dlCl IF THATS NEEDED POST-MERGE
+    output = tCl,pCl,lCl
+    modes = s
+    lensing = yes
+    root = CLASS_delens/data/Node_0/output/scatter_
+    overwrite_root = yes
+    l_max_scalars = 5000
+                """)
+            with open(classDataDir + 'input/' + rootName + "_class_delens.ini", "w") as f:
+                f.write('\n'.join(['%s = %s' % (k, v) for k, v in dcode.items()]))
+
+        if DEBUG_CLASS_DELENS_INI:
+            input(rootName + '_class_scatter.ini ready. Please check it and press enter to continue.')
 
         print('Starting scatter...')
-        #raise StopIteration
         scatter_proc = start_class_subproc(classDataDir + 'input/' + rootName + "_class_scatter.ini", cwd=classExecDir, version='class_scatter_dl')
-        #scatter_proc = sp.run(['./class_scatter', classDataDir + 'input/' + rootName + "_class_scatter.ini"], cwd=classExecDir, stdout=sp.PIPE, stderr=sp.PIPE, check=True)
-        #print(scatter_proc.stdout)
-        #print(scatter_proc.stderr)
 
         # REORDER LENSED SPECTRA (we will not input lensed spectra, it will be internal (?), cmd+f LOC37377)
         """spectra = np.loadtxt(classDataDir + 'output/' + rootName + '_cl_lensed.dat')
         np.savetxt(classDataDir + 'output/' + rootName + '_cl_lensed_reorder.dat',
                    np.column_stack(
                        (spectra[:, 0], spectra[:, 1], spectra[:, 3], spectra[:, 2], spectra[:, 4], spectra[:, 5])))"""
-        # REORDER UNLENSED SPECTRA
-        spectra = np.loadtxt(classDataDir + 'output/' + rootName + '__cl.dat')
-        np.savetxt(classDataDir + 'output/' + rootName + '_cl_reorder.dat',
-                   np.column_stack(
-                       (spectra[:, 0], spectra[:, 1], spectra[:, 3], spectra[:, 2], spectra[:, 4], spectra[:, 5])
-                   ))
 
 
-        print('Starting delens...')
-        if DEBUG_CLASS_DELENS_INI:
-            raise Exception(f'Yovel - Stopping so you can look at what just happened. Run [./class /Users/yovel/Desktop/fisher_test/FisherLens/CLASS_delens/data/Node_0/input/scatter_class_delens.ini]. Check input/{rootName}_class_delens.ini and output/{rootName}_defl_noise.dat')
-        delens_proc = start_class_subproc(classDataDir + 'input/' + rootName + "_class_delens.ini", cwd=classExecDir, version='class_scatter_dl')
-        #delens_proc = sp.run(['./class', classDataDir + 'input/' + rootName + "_class_delens.ini"], cwd=classExecDir, stdout=sp.PIPE, stderr=sp.PIPE, check=True)
+
+        if not INTERNAL_SCATTER_CL:
+            # REORDER UNLENSED SPECTRA
+            spectra = np.loadtxt(classDataDir + 'output/' + rootName + '__cl.dat')
+            np.savetxt(classDataDir + 'output/' + rootName + '_cl_reorder.dat',
+                       np.column_stack(
+                           (spectra[:, 0], spectra[:, 1], spectra[:, 3], spectra[:, 2], spectra[:, 4], spectra[:, 5])
+                       ))
+            print('Starting delens...')
+            if DEBUG_CLASS_DELENS_INI:
+                raise Exception(f'Yovel - Stopping so you can look at what just happened. Run [./class_delens /Users/yovel/Desktop/fisher_test/FisherLens/CLASS_delens/data/Node_0/input/scatter_class_delens.ini]. Check input/{rootName}_class_delens.ini and output/{rootName}_defl_noise.dat')
+            delens_proc = start_class_subproc(classDataDir + 'input/' + rootName + "_class_delens.ini", cwd=classExecDir, version='class_scatter_dl')
+            #delens_proc = sp.run(['./class_delens', classDataDir + 'input/' + rootName + "_class_delens.ini"], cwd=classExecDir, stdout=sp.PIPE, stderr=sp.PIPE, check=True)
 
     else: # ann or decay, both work
         with open(classDataDir  + 'input/' + rootName + ".ini", "w") as f:
@@ -580,7 +589,7 @@ l_max_scalars = 5000
                     +'\n'.join(['%s = %s' % (k, v) for k, v in dcode.items()]))
 
         ann_or_decay_proc = start_class_subproc(classDataDir + 'input/' + rootName + ".ini", classExecDir)
-        #os.system("cd " + classExecDir + " ; ./class " + classDataDir + 'input/' + rootName + ".ini")
+        #os.system("cd " + classExecDir + " ; ./class_delens " + classDataDir + 'input/' + rootName + ".ini")
 
 ########################################################
 ## Filling the spectra into specific CLASS dict()s.   ##

@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plot
 
-ANN = True
+ANN = False
 DECAY = False # not impl
-SCATTER = False
+SCATTER = True
 
 c = 2.997e8
 f_sky = 0.4
@@ -48,8 +48,8 @@ if ANN:
     LABELS = [r'$\Omega_{DM} h^2$', r'$\Omega_b h^2$', r'$10^{9}A_s$', r'$n_s$', r'$\tau_{reio}$', r'$10^{2}\theta_s$',PANN]
 elif SCATTER:
     SCALES = [0, 0, 9, 0, 0, 0, 0, 0]
-    FID = np.array([0.1197, 0.0222, 2.196e-9, 0.9655, 0.054, 0.010409*100, 1, 0])
-    LABELS = [r'$\Omega_{DM} h^2$', r'$\Omega_b h^2$', r'$10^{9}A_s$', r'$n_s$', r'$\tau_{reio}$', r'$10^{2}\theta_s$', r'$m_\chi$', r'$\sigma$']
+    FID = np.array([0.1197, 0.0222, 2.196e-9, 0.9655, 0.054, 0.010409*100, 1, -25])
+    LABELS = [r'$\Omega_{DM} h^2$', r'$\Omega_b h^2$', r'$10^{9}A_s$', r'$n_s$', r'$\tau_{reio}$', r'$10^{2}\theta_s$', r'$m_\chi$', r'$\log_{10}(\sigma)$']
 
 plot_triangle.triplot(LABELS, SCALES, FID, cov)
 #plot.gcf().set_dpi(100)

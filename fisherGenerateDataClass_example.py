@@ -116,7 +116,7 @@ elif SCATTER:
                 'tau': 0.054,
                 'theta_s': 0.010409,
                 'm_dmeff': 1,  # 1e-5 1e-4 1e-3 1e-2 1e-1 1 10 100 1000
-                'log10sigma_dmeff': -100
+                'log10sigma_dmeff': -25
                 }
     stepSizes = {'omega_dmeff': 0.0030,
                  'omega_b': 0.0008,
@@ -125,7 +125,7 @@ elif SCATTER:
                  'tau': 0.002,
                  'theta_s': 0.000050,
                  'm_dmeff': 0.01,
-                 'log10sigma_dmeff': -26
+                 'log10sigma_dmeff': 1
                  }
 
 cosmoParams = list(cosmoFid.keys())

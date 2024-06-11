@@ -108,7 +108,7 @@ def triplot(labels: typing.Sequence[str], scales, means: np.ndarray, covariances
                 ax.plot(x, y)
                 ax.set_ylim(0, 1.2)
                 ax.set_yticks([])
-                if PANN == labels[i]:
+                if labels[i] == PANN:
                     ax.set_xlim(0)
 
             # others
