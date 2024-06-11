@@ -6,13 +6,13 @@ import platform
 
 DEBUG_CLASS_DELENS_INI = False
 
-NONLINEAR = False
+NONLINEAR = True
 
 INTERNAL_SCATTER_CL = True
 
 TCMB = 2.7255  ## CMB temperature in K
 
-def start_class_subproc(ini_path, cwd, version='class_scatter_nl'):
+def start_class_subproc(ini_path, cwd, version='class_scatter_nl_dl' if NONLINEAR else 'class_scatter_dl'):
     """Version should be class_delens, class_scatter_dl"""
     os = platform.system()
     print(' '.join(['wsl', './'+cwd+version, ini_path]))
@@ -351,11 +351,12 @@ def class_generate_data(cosmo,
     dcode['output'] = 'tCl,pCl,lCl,dlCl' if not SCATTER else 'tCl,pCl,lCl,dlCl'
     dcode['modes'] = 's'
     dcode['lensing'] = 'yes' if not SCATTER else 'yes'
-    dcode['non linear'] = 'hmcode'
-    if dcode['non linear'] == 'hmcode' and 'eta_0' in list(cosmo.keys()):
-        cosmoclass['eta_0'] = cosmo['eta_0']
-    if dcode['non linear'] == 'hmcode' and 'c_min' in list(cosmo.keys()):
-        cosmoclass['c_min'] = cosmo['c_min']
+    if not NONLINEAR:
+        dcode['non linear'] = 'hmcode'
+        if dcode['non linear'] == 'hmcode' and 'eta_0' in list(cosmo.keys()):
+            cosmoclass['eta_0'] = cosmo['eta_0']
+        if dcode['non linear'] == 'hmcode' and 'c_min' in list(cosmo.keys()):
+            cosmoclass['c_min'] = cosmo['c_min']
     dcode['l_max_scalars'] = lmax
     dcode['delta_l_max'] = 5000-lmax
     dcode['delta_dl_max'] = 0
@@ -559,7 +560,7 @@ def class_generate_data(cosmo,
             input(rootName + '_class_scatter.ini ready. Please check it and press enter to continue.')
 
         print('Starting scatter...')
-        scatter_proc = start_class_subproc(classDataDir + 'input/' + rootName + "_class_scatter.ini", cwd=classExecDir, version='class_scatter_dl')
+        scatter_proc = start_class_subproc(classDataDir + 'input/' + rootName + "_class_scatter.ini", cwd=classExecDir)
 
         # REORDER LENSED SPECTRA (we will not input lensed spectra, it will be internal (?), cmd+f LOC37377)
         """spectra = np.loadtxt(classDataDir + 'output/' + rootName + '_cl_lensed.dat')
@@ -579,7 +580,7 @@ def class_generate_data(cosmo,
             print('Starting delens...')
             if DEBUG_CLASS_DELENS_INI:
                 raise Exception(f'Yovel - Stopping so you can look at what just happened. Run [./class_delens /Users/yovel/Desktop/fisher_test/FisherLens/CLASS_delens/data/Node_0/input/scatter_class_delens.ini]. Check input/{rootName}_class_delens.ini and output/{rootName}_defl_noise.dat')
-            delens_proc = start_class_subproc(classDataDir + 'input/' + rootName + "_class_delens.ini", cwd=classExecDir, version='class_scatter_dl')
+            delens_proc = start_class_subproc(classDataDir + 'input/' + rootName + "_class_delens.ini", cwd=classExecDir)
             #delens_proc = sp.run(['./class_delens', classDataDir + 'input/' + rootName + "_class_delens.ini"], cwd=classExecDir, stdout=sp.PIPE, stderr=sp.PIPE, check=True)
 
     else: # ann or decay, both work
@@ -588,7 +589,7 @@ def class_generate_data(cosmo,
                     +'\n'
                     +'\n'.join(['%s = %s' % (k, v) for k, v in dcode.items()]))
 
-        ann_or_decay_proc = start_class_subproc(classDataDir + 'input/' + rootName + ".ini", classExecDir)
+        ann_or_decay_proc = start_class_subproc(classDataDir + 'input/' + rootName + ".ini", classExecDir, version='class_delens')
         #os.system("cd " + classExecDir + " ; ./class_delens " + classDataDir + 'input/' + rootName + ".ini")
 
 ########################################################
