@@ -205,7 +205,7 @@ def getPowerDerivWithParams(cosmoFid, stepSizes, polCombs, cmbNoiseSpectraK, def
 
     nParams = len(paramsToDifferentiate)
 
-    oneSidedParams = ['DM_Pann', 'pann', 'log10sigma_dmeff']
+    oneSidedParams = ['DM_Pann', 'pann', 'sigma_dmeff', 'DM_decay_Gamma', 'DM_annihilation_efficiency']
 
     if 'mnu' in cosmoFid.keys():
         if cosmoFid['mnu'] < stepSizes['mnu']:

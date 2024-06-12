@@ -27,9 +27,12 @@ CV = False
 
 # CHOOSE DM MODEL HERE
 ANN = False
-SCATTER = True
+SCATTER = False
+DECAY = True
 
 
+if not (ANN ^ SCATTER ^ DECAY) and not (ANN and SCATTER and DECAY):
+    raise ValueError('Please select one of scattering, annihilation, or decay.')
 
 
 ###  Set of experiments  ###
@@ -59,7 +62,13 @@ outputDir = classDataDir + 'results/'
 
 classDataDirThisNode = classDataDir + 'data/Node_' + str(rank) + '/'
 # Base name to use for all output files
-fileBase = 'scatter' if SCATTER else ('anncv' if CV else 'ann')
+if SCATTER:
+    fileBase = 'scattercv' if CV else 'scatter'
+elif ANN:
+    fileBase = 'anncv' if CV else 'ann'
+elif DECAY:
+    fileBase = 'decaycv' if CV else 'decay'
+
 fileBaseThisNode = fileBase
 
 if not os.path.exists(classDataDirThisNode):
@@ -107,6 +116,37 @@ if ANN:
                 #'Yhe' : 0.0048,
                 'pann': 1.0e-8/9e16
                 }
+elif DECAY:
+    print('Calculating with decay...')
+    cosmoFid = {'omega_c_h2' : 0.1197,
+                'omega_b_h2': 0.0222,
+                #'N_eff': 3.046, \
+                'A_s' : 2.196e-9,
+                'n_s' : 0.9655,
+                'tau' : 0.054,
+                #'H0' : 67.5, \
+                'theta_s' : 0.010409,
+                #'Yhe' : 0.25, \
+                #'r'   : 0.01, \
+                #'mnu' : 0.06,
+                'DM_decay_Gamma': 0
+                }
+    #cosmoFid['n_t'] = - cosmoFid['r'] / 8.0 * (2.0 - cosmoFid['n_s'] - cosmoFid['r'] / 8.0)
+
+    stepSizes = {'omega_c_h2' : 0.0030,
+                'omega_b_h2': 0.0008,
+                #'N_eff': .080, \
+                'A_s' : 0.1e-9,
+                'n_s' : 0.010,
+                'tau' : 0.002,
+                #'H0' : 1.2, \
+                'theta_s' : 0.000050,
+                #'mnu' : 0.02, \
+                #'r'   : 0.001, \
+                #'n_t' : cosmoFid['n_t'], \
+                #'Yhe' : 0.0048,
+                'DM_decay_Gamma': 1.e-30
+                }
 elif SCATTER:
     print('Calculating with scattering...')
     cosmoFid = {'omega_dmeff': 0.12011,
@@ -115,8 +155,9 @@ elif SCATTER:
                 'n_s': 0.9655,
                 'tau': 0.054,
                 'theta_s': 0.010409,
-                'm_dmeff': 1,  # 1e-5 1e-4 1e-3 1e-2 1e-1 1 10 100 1000
-                'log10sigma_dmeff': -25
+                #'log10m_dmeff': 0,  # 1e-5 1e-4 1e-3 1e-2 1e-1 1 10 100 1000
+                #'log10sigma_dmeff': -25
+                'sigma_dmeff': 1.e-100
                 }
     stepSizes = {'omega_dmeff': 0.0030,
                  'omega_b': 0.0008,
@@ -124,8 +165,9 @@ elif SCATTER:
                  'n_s': 0.010,
                  'tau': 0.002,
                  'theta_s': 0.000050,
-                 'm_dmeff': 0.01,
-                 'log10sigma_dmeff': 1
+                 #'log10m_dmeff': 0.1,
+                 #'log10sigma_dmeff': 1
+                 'sigma_dmeff': 1.e-28
                  }
 
 cosmoParams = list(cosmoFid.keys())
@@ -144,6 +186,10 @@ extra_params = dict()
 #extra_params['output_spectra_noise'] = 'no'
 #extra_params['write warnings'] = 'y'
 extra_params['delta_l_max'] = delta_l_max
+if SCATTER:
+    extra_params['log10m_dmeff'] = 0  # -5 -4 -3 -2 -1 0 1 2 3
+elif DECAY:
+    extra_params['DM_decay_fraction'] = 1.
 
 # Specify \ells to keep when performing Fisher matrix sum
 ellsToUse = {'cl_TT': [lmin, lmaxTT], 'cl_TE': [lmin, lmax], 'cl_EE': [lmin, lmax], 'cl_dd': [2, lmax]}

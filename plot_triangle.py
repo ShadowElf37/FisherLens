@@ -48,7 +48,10 @@ def gaussian2d(ax, C, M, width_sigma=5, res=100, debug=False):
     ax.set_xlim(M[1] - sw1, M[1] + sw1)
 
 
-PANN = r'$p_{\mathrm{ann}}$ ($10^{-7}\mathrm{m}^3\mathrm{s}^{-1}\mathrm{kg}^{-1}$)'
+ONE_SIDED = [r'$p_{\mathrm{ann}}$ ($10^{-7}\mathrm{m}^3\mathrm{s}^{-1}\mathrm{kg}^{-1}$)',
+             r'$\sigma\ \ (10^{-26}\mathrm{cm}^2)$',
+             r'$\Gamma\ \ (10^{-28}\mathrm{s}^{-1})$']
+#SIGMA = r'$10^{26}\sigma$'
 
 def triplot(labels: typing.Sequence[str], scales, means: np.ndarray, covariances: np.ndarray, debug=False):
     dim = len(labels) #covariances.shape[0]
@@ -108,7 +111,7 @@ def triplot(labels: typing.Sequence[str], scales, means: np.ndarray, covariances
                 ax.plot(x, y)
                 ax.set_ylim(0, 1.2)
                 ax.set_yticks([])
-                if labels[i] == PANN:
+                if labels[i] in ONE_SIDED:
                     ax.set_xlim(0)
 
             # others
@@ -117,9 +120,9 @@ def triplot(labels: typing.Sequence[str], scales, means: np.ndarray, covariances
                     ax.set_xticks([])
                     ax.set_yticks([])
                 gaussian2d(ax, C, M)
-                if PANN == labels[j]:
+                if labels[j] in ONE_SIDED:
                     ax.set_xlim(0., None)
-                if PANN == labels[i]:
+                if labels[i] in ONE_SIDED:
                     ax.set_ylim(0., None)
 
             #limy = limits.get(labels[i] )

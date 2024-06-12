@@ -55,8 +55,8 @@ def class_generate_data(cosmo,
         os.makedirs(classDataDir + 'output/')
 
     SCATTER = 'omega_dmeff' in cosmo.keys()
-    if SCATTER:
-        print('scattering!')
+    #if SCATTER:
+        #print('scattering!')
 
     ########################################################
     ## Convert cosmological parameters to CLASS format    ##
@@ -66,10 +66,7 @@ def class_generate_data(cosmo,
 
     # SCATTERING MODIFICATION
     if SCATTER:
-        cosmoclass.update({
-            'omega_cdm': 1e-15,
-
-        })
+        cosmoclass['omega_cdm'] = 1.e-15
         if NONLINEAR:
             cosmoclass.update({
                 'non linear': 'PT',
@@ -79,15 +76,14 @@ def class_generate_data(cosmo,
                 'RSD': 'Yes',
                 'AP': 'Yes',
                 'Omfid': '0.31',
+                'k_pivot': '0.05',
             })
-        for k in ('omega_dmeff', 'omega_b', 'm_dmeff', 'log10sigma_dmeff'):
+        for k in ('omega_dmeff', 'omega_b', 'm_dmeff', 'log10sigma_dmeff', 'sigma_dmeff', 'log10m_dmeff'):
             if k in cosmo.keys():
                 cosmoclass[k] = cosmo[k]
     else:
         cosmoclass['omega_b'] = cosmo['omega_b_h2']
         cosmoclass['omega_cdm'] = cosmo['omega_c_h2']
-
-
 
     # PANN MODIFICATION
     if 'pann' in cosmo.keys():
@@ -100,6 +96,9 @@ def class_generate_data(cosmo,
         #            'DM_annihilation_zmin': 30
         #        })
 
+    if 'DM_decay_Gamma' in cosmo.keys():
+        cosmoclass['DM_decay_Gamma'] = cosmo['DM_decay_Gamma']
+        #print(cosmo['DM_decay_Gamma'])
 
 
     if 'H0' in list(cosmo.keys()):
@@ -348,7 +347,10 @@ def class_generate_data(cosmo,
     dcode = dict()
 
     dcode['root'] = classDataDir + 'output/' + rootName #+ '_'
-    dcode['output'] = 'tCl,pCl,lCl,dlCl' if not SCATTER else 'tCl,pCl,lCl,dlCl'
+    if SCATTER and NONLINEAR:
+        dcode['output'] = 'tCl,pCl,lCl,dlCl,mPk'
+    else:
+        dcode['output'] = 'tCl,pCl,lCl,dlCl' if not SCATTER else 'tCl,pCl,lCl,dlCl'
     dcode['modes'] = 's'
     dcode['lensing'] = 'yes' if not SCATTER else 'yes'
     if not NONLINEAR:
@@ -434,7 +436,7 @@ def class_generate_data(cosmo,
     if SCATTER:
         if INTERNAL_SCATTER_CL:
             dcode['cmb spectra type'] = 'internal'
-            print('internal delensing with scatter_dl')
+            #print('internal delensing with scatter_dl')
         else:
             dcode['cmb spectra type'] = 'external'
             dcode['command_for_external_cmb_spectra'] = 'cat ' + classDataDir + 'output/' + rootName + '_cl_reorder.dat'
@@ -544,8 +546,9 @@ def class_generate_data(cosmo,
                 f.write('\n'.join(['%s = %s' % (k, v) for k, v in dcode.items()]))
 
             else:
+                # this section should not trigger post-merge
                 f.write("""
-    # THIS IS WHAT THE SCATTERING CODE TAKES IN, PLEASE UPDATE WITH dlCl IF THATS NEEDED POST-MERGE
+    # THIS IS WHAT THE SCATTERING CODE TAKES IN
     output = tCl,pCl,lCl
     modes = s
     lensing = yes
@@ -559,7 +562,7 @@ def class_generate_data(cosmo,
         if DEBUG_CLASS_DELENS_INI:
             input(rootName + '_class_scatter.ini ready. Please check it and press enter to continue.')
 
-        print('Starting scatter...')
+        #print('Starting scatter...')
         scatter_proc = start_class_subproc(classDataDir + 'input/' + rootName + "_class_scatter.ini", cwd=classExecDir)
 
         # REORDER LENSED SPECTRA (we will not input lensed spectra, it will be internal (?), cmd+f LOC37377)
