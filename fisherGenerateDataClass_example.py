@@ -27,12 +27,12 @@ CV = False
 
 # CHOOSE DM MODEL HERE
 ANN = False
-SCATTER = False
-DECAY = True
+SCATTER = True
+DECAY = False
 
 
 if not (ANN ^ SCATTER ^ DECAY) and not (ANN and SCATTER and DECAY):
-    raise ValueError('Please select one of scattering, annihilation, or decay.')
+    raise ValueError('Please select one and only one of scattering, annihilation, or decay.')
 
 
 ###  Set of experiments  ###
@@ -69,8 +69,6 @@ elif ANN:
 elif DECAY:
     fileBase = 'decaycv' if CV else 'decay'
 
-fileBaseThisNode = fileBase
-
 if not os.path.exists(classDataDirThisNode):
     os.makedirs(classDataDirThisNode)
 if not os.path.exists(outputDir):
@@ -82,6 +80,8 @@ polCombs = ['cl_TT', 'cl_TE', 'cl_EE', 'cl_dd']
 
 #######################################################################################3
 #LOAD PARAMS AND GET POWER SPECTRA
+
+extra_params = dict()
 
 #Fiducial values and step sizes taken from arXiv:1509.07471 Allison et al
 c = 2.997e8
@@ -147,6 +147,7 @@ elif DECAY:
                 #'Yhe' : 0.0048,
                 'DM_decay_Gamma': 1.e-30
                 }
+    extra_params['DM_decay_fraction'] = 1.
 elif SCATTER:
     print('Calculating with scattering...')
     cosmoFid = {'omega_dmeff': 0.12011,
@@ -167,8 +168,10 @@ elif SCATTER:
                  'theta_s': 0.000050,
                  #'log10m_dmeff': 0.1,
                  #'log10sigma_dmeff': 1
-                 'sigma_dmeff': 1.e-28
+                 'sigma_dmeff': 1.e-40
                  }
+    extra_params['log10m_dmeff'] = -5  # -5 -4 -3 -2 -1 0 1 2 3
+    extra_params['npow_dmeff'] = 0
 
 cosmoParams = list(cosmoFid.keys())
 delta_l_max = 5000-lmax
@@ -181,15 +184,14 @@ lvec = numpy.arange(2,lmax+1)
 reconstructionMask = dict()
 reconstructionMask['lmax_T'] = lmaxTT
 
-extra_params = dict()
+
 #extra_params['delensing_verbose'] = 3
 #extra_params['output_spectra_noise'] = 'no'
 #extra_params['write warnings'] = 'y'
 extra_params['delta_l_max'] = delta_l_max
 if SCATTER:
-    extra_params['log10m_dmeff'] = 0  # -5 -4 -3 -2 -1 0 1 2 3
-elif DECAY:
-    extra_params['DM_decay_fraction'] = 1.
+    fileBase += '_m' + str(extra_params['log10m_dmeff']) + '_n' + str(extra_params['npow_dmeff'])
+
 
 # Specify \ells to keep when performing Fisher matrix sum
 ellsToUse = {'cl_TT': [lmin, lmaxTT], 'cl_TE': [lmin, lmax], 'cl_EE': [lmin, lmax], 'cl_dd': [2, lmax]}
@@ -274,7 +276,7 @@ if not CV:
     powersFid, cmbNoiseSpectra['cl_dd'] = classWrapTools.class_generate_data(cosmoFid,
                                      cmbNoise = cmbNoiseSpectra,
                                      extraParams = extra_params,
-                                     rootName = fileBaseThisNode,
+                                     rootName = fileBase,
                                      lmax = lmax_calc,
                                      classExecDir = classExecDir,
                                      classDataDir = classDataDirThisNode,
@@ -286,7 +288,7 @@ else:
                                      cmbNoise = cmbNoiseSpectra,
                                      deflectionNoise = cmbNoiseSpectra['cl_dd'],
                                      extraParams = extra_params,
-                                     rootName = fileBaseThisNode,
+                                     rootName = fileBase,
                                      lmax = lmax_calc,
                                      classExecDir = classExecDir,
                                      classDataDir = classDataDirThisNode,
@@ -302,7 +304,7 @@ paramDerivs = fisherTools.getPowerDerivWithParams(cosmoFid = cosmoFid, \
                         deflectionNoisesK = cmbNoiseSpectra['cl_dd'], \
                         useClass = True, \
                         lmax = lmax_calc, \
-                        fileNameBase = fileBaseThisNode, \
+                        fileNameBase = fileBase, \
                         classExecDir = classExecDir, \
                         classDataDir = classDataDirThisNode)
 
@@ -325,7 +327,7 @@ forecastData = {'cmbNoiseSpectra' : cmbNoiseSpectra,
 
 print('Node ' + str(rank) + ' saving data')
 
-filename = classDataDirThisNode + fileBaseThisNode + '.pkl'
+filename = classDataDirThisNode + fileBase + '.pkl'
 delensedOutput = open(filename, 'wb')
 pickle.dump(forecastData, delensedOutput, -1)
 delensedOutput.close()

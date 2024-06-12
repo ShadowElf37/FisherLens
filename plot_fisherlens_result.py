@@ -2,15 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plot
 
 ANN = False
-DECAY = True # not impl
-SCATTER = False
+DECAY = False # not impl
+SCATTER = True
 
 c = 2.997e8
 f_sky = 0.4
 TAU_PRIOR = True
 
 if SCATTER:
-    data = np.load('CLASS_delens/results/scatter.pkl', allow_pickle=True)
+    data = np.load('CLASS_delens/results/scatter_m2_n0.pkl', allow_pickle=True)
 elif ANN:
     data = np.load('CLASS_delens/results/ann.pkl', allow_pickle=True)
 elif DECAY:
@@ -25,6 +25,7 @@ if TAU_PRIOR:
     fish[:, 4] = 0
     fish[4,4] = 1/0.0074**2
 cov = np.linalg.inv(fish)/f_sky
+#print(np.sqrt(cov[4,4]))
 
 if ANN:
     # fix pann factors of c
@@ -40,7 +41,7 @@ elif DECAY:
     #print('m 95% = 1 ±', np.sqrt(cov[-2,-2])*2, 'GeV')
     print('Γ 95% =', np.sqrt(cov[-1, -1]) * 2, 'cm^2')
 
-print(cov.tolist())
+#print(cov.tolist())
 print(np.sqrt(np.diagonal(cov)))
 
 # graph
