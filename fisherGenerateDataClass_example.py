@@ -190,6 +190,8 @@ if SCATTER:
     fileBase += '_m' + str(extra_params['log10m_dmeff']) + '_n' + str(extra_params['npow_dmeff']) + '_s' + str(np.abs(np.floor(np.log10(float(sys.argv[-1])))))
 if ANN:
     fileBase += '_p' + str(np.abs(np.floor(np.log10(float(sys.argv[-1])))))
+if DECAY:
+    fileBase += '_g' + str(np.abs(np.floor(np.log10(float(sys.argv[-1])))))
 
 
 # Specify \ells to keep when performing Fisher matrix sum

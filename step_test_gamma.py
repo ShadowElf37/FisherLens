@@ -44,7 +44,7 @@ mode = 2
 constraints = []
 
 if mode == 1:
-    for ss_exp in range(-15, -5):
+    for ss_exp in range(-35, -25):
         try:
             cmd = ['python', 'fisherGenerateDataClass_example.py', str(10**ss_exp)]
             print(' '.join(cmd))
@@ -54,8 +54,8 @@ if mode == 1:
             print(e)
         #print(f'{m} joined!')
 elif mode == 2:
-    for ss_exp in range(-15, -5):
-        f = f'ann_p{str(abs(float(ss_exp)))}'
+    for ss_exp in range(-35, -25):
+        f = f'decay_g{str(abs(float(ss_exp)))}'
         try:
             print(f'{f}.pkl')
             fish = np.load(f'CLASS_delens/results/{f}.pkl', allow_pickle=True)['fisherGaussian']['delensed']
@@ -68,7 +68,7 @@ elif mode == 2:
         except:
             print(f'Skipping 10^{ss_exp}')
     print(constraints)
-    plot.loglog(10.**np.array(list(range(-15, -5)))/9e16, constraints)
+    plot.loglog(10.**np.array(list(range(-35, -25))), constraints)
     plot.xlabel('Step Size in Derivative')
     plot.ylabel('Constraint from Forecast')
     plot.axhline(y=1e-6/9e16, color='r', linestyle='--')
