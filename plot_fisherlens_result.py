@@ -10,7 +10,7 @@ f_sky = 0.4
 TAU_PRIOR = True
 
 if SCATTER:
-    data = np.load('CLASS_delens/results/scatter_m2_n0.pkl', allow_pickle=True)
+    data = np.load('CLASS_delens/results/step-25/scatter_m2_n0.pkl', allow_pickle=True)
 elif ANN:
     data = np.load('CLASS_delens/results/ann.pkl', allow_pickle=True)
 elif DECAY:

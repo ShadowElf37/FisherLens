@@ -3,12 +3,9 @@ import sys
 import classWrapTools
 import fisherTools
 import pickle
-import scipy
 import numpy
 import os
 import numpy as np
-
-import copy
 
 rank = 0
 size = 1
@@ -27,8 +24,8 @@ CV = False
 
 # CHOOSE DM MODEL HERE
 ANN = False
-SCATTER = True
-DECAY = False
+SCATTER = False
+DECAY = True
 
 
 if not (ANN ^ SCATTER ^ DECAY) and not (ANN and SCATTER and DECAY):
@@ -114,7 +111,7 @@ if ANN:
                 #'r'   : 0.001, \
                 #'n_t' : cosmoFid['n_t'], \
                 #'Yhe' : 0.0048,
-                'pann': 1.0e-8/9e16
+                'pann': float(sys.argv[-1])/9e16#1.0e-8/9e16
                 }
 elif DECAY:
     print('Calculating with decay...')
@@ -145,7 +142,7 @@ elif DECAY:
                 #'r'   : 0.001, \
                 #'n_t' : cosmoFid['n_t'], \
                 #'Yhe' : 0.0048,
-                'DM_decay_Gamma': 1.e-30
+                'DM_decay_Gamma': float(sys.argv[-1])#1.e-30
                 }
     extra_params['DM_decay_fraction'] = 1.
 elif SCATTER:
@@ -168,10 +165,10 @@ elif SCATTER:
                  'theta_s': 0.000050,
                  #'log10m_dmeff': 0.1,
                  #'log10sigma_dmeff': 1
-                 'sigma_dmeff': 1.e-40
+                 'sigma_dmeff': float(sys.argv[-1])#1.e-12
                  }
-    extra_params['log10m_dmeff'] = -5  # -5 -4 -3 -2 -1 0 1 2 3
-    extra_params['npow_dmeff'] = 0
+    extra_params['log10m_dmeff'] = sys.argv[-3]  # -5 -4 -3 -2 -1 0 1 2 3
+    extra_params['npow_dmeff'] = sys.argv[-2]
 
 cosmoParams = list(cosmoFid.keys())
 delta_l_max = 5000-lmax
@@ -190,7 +187,9 @@ reconstructionMask['lmax_T'] = lmaxTT
 #extra_params['write warnings'] = 'y'
 extra_params['delta_l_max'] = delta_l_max
 if SCATTER:
-    fileBase += '_m' + str(extra_params['log10m_dmeff']) + '_n' + str(extra_params['npow_dmeff'])
+    fileBase += '_m' + str(extra_params['log10m_dmeff']) + '_n' + str(extra_params['npow_dmeff']) + '_s' + str(np.abs(np.floor(np.log10(float(sys.argv[-1])))))
+if ANN:
+    fileBase += '_p' + str(np.abs(np.floor(np.log10(float(sys.argv[-1])))))
 
 
 # Specify \ells to keep when performing Fisher matrix sum
@@ -359,3 +358,7 @@ if rank==0:
     delensedOutput = open(filename, 'wb')
     pickle.dump(forecastData, delensedOutput, -1)
     delensedOutput.close()
+
+
+
+#import report_fisherlens_scattering_results
