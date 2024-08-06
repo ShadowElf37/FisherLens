@@ -43,8 +43,8 @@ TAU_PRIOR = True
 n = 0
 m = -5
 ssranges = {
-    (0,0): range(-35, -15),
-    (-5,0): range(-35, -15)
+    (0,0): np.arange(-35, -15, 0.2),
+    (-5,0): np.arange(-33, -25, 0.05)
 }
 mode = 2
 constraints = []
@@ -61,7 +61,7 @@ if mode == 1:
         #print(f'{m} joined!')
 elif mode == 2:
     for ss_exp in ssranges[(m,n)]:
-        f = f'scatter_m{str(m)}_n{str(n)}_s{str(abs(float(ss_exp)))}'
+        f = f'scatter_m{str(m)}_n{str(n)}_s{str(round(abs(float(ss_exp)), 1))}'
         try:
             print(f'{f}.pkl')
             fish = np.load(f'CLASS_delens/results/{f}.pkl', allow_pickle=True)['fisherGaussian']['delensed']
@@ -72,11 +72,13 @@ elif mode == 2:
             cov = np.linalg.inv(fish) / f_sky
             constraints.append(np.sqrt(cov[-1, -1]) * 2)
         except:
+            constraints.append(float('nan'))
             print(f'Skipping 10^{ss_exp}')
     print(constraints)
-    plot.loglog(10.**np.array(list(ssranges[(m,n)]))[:19], constraints)
+    plot.loglog(10.**np.array(list(ssranges[(m,n)])), constraints)
     plot.xlabel('Step Size in Derivative')
     plot.ylabel('Constraint from Forecast')
+    plot.title(f'Constraint for Scattering Cross-Section ($m=10^{{{m}}}$ GeV) ($n={n}$)')
     plot.axhline(y=10.**-step_table[(m,n)], color='r', linestyle='--')
     plot.legend(['CMB-S4 (Fisher)', 'Planck'])
     plot.show()

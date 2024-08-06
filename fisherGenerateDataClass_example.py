@@ -24,8 +24,8 @@ CV = False
 
 # CHOOSE DM MODEL HERE
 ANN = False
-SCATTER = False
-DECAY = True
+SCATTER = True
+DECAY = False
 
 
 if not (ANN ^ SCATTER ^ DECAY) and not (ANN and SCATTER and DECAY):
@@ -187,7 +187,7 @@ reconstructionMask['lmax_T'] = lmaxTT
 #extra_params['write warnings'] = 'y'
 extra_params['delta_l_max'] = delta_l_max
 if SCATTER:
-    fileBase += '_m' + str(extra_params['log10m_dmeff']) + '_n' + str(extra_params['npow_dmeff']) + '_s' + str(np.abs(np.floor(np.log10(float(sys.argv[-1])))))
+    fileBase += '_m' + str(extra_params['log10m_dmeff']) + '_n' + str(extra_params['npow_dmeff']) + '_s' + str(np.abs(round(np.log10(float(sys.argv[-1])), 1)))
 if ANN:
     fileBase += '_p' + str(np.abs(np.floor(np.log10(float(sys.argv[-1])))))
 if DECAY:

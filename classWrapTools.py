@@ -88,17 +88,9 @@ def class_generate_data(cosmo,
     # PANN MODIFICATION
     if 'pann' in cosmo.keys():
         cosmoclass['DM_annihilation_efficiency'] = cosmo['pann']
-        #if cosmo['pann'] > 0:
-        #    cosmoclass.update({
-        #            'DM_annihilation_variation': 0,#-1.73e-5,
-        #            'DM_annihilation_z': 600,
-        #            'DM_annihilation_zmax': 2500,
-        #            'DM_annihilation_zmin': 30
-        #        })
 
     if 'DM_decay_Gamma' in cosmo.keys():
         cosmoclass['DM_decay_Gamma'] = cosmo['DM_decay_Gamma']
-        #print(cosmo['DM_decay_Gamma'])
 
 
     if 'H0' in list(cosmo.keys()):
@@ -350,9 +342,9 @@ def class_generate_data(cosmo,
     if SCATTER and NONLINEAR:
         dcode['output'] = 'tCl,pCl,lCl,dlCl,mPk'
     else:
-        dcode['output'] = 'tCl,pCl,lCl,dlCl' if not SCATTER else 'tCl,pCl,lCl,dlCl'
+        dcode['output'] = 'tCl,pCl,lCl,dlCl'
     dcode['modes'] = 's'
-    dcode['lensing'] = 'yes' if not SCATTER else 'yes'
+    dcode['lensing'] = 'yes'
     if not NONLINEAR:
         dcode['non linear'] = 'hmcode'
         if dcode['non linear'] == 'hmcode' and 'eta_0' in list(cosmo.keys()):

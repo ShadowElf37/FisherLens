@@ -35,14 +35,15 @@ step_table = {
     (3,4):12,
 }
 
-STEP_TABLE_OFFSET = 6
+STEP_TABLE_OFFSET = 2
 
-for m in range(-6,4):
-    for n in (0,2,4):
-        cmd = ['python', 'fisherGenerateDataClass_example.py', str(m), str(n), str(10**(-step_table[(m,n)]-STEP_TABLE_OFFSET))]
-        print(' '.join(cmd))
-        proc = sp.Popen(cmd)
-        proc.wait()
-        print(f'{m} joined!')
+if __name__ == "__main__":
+    for m in range(-6,4):
+        for n in (0,2,4):
+            cmd = ['python', 'fisherGenerateDataClass_example.py', str(m), str(n), str(10**(-step_table[(m,n)]-STEP_TABLE_OFFSET))]
+            print(' '.join(cmd))
+            proc = sp.Popen(cmd)
+            proc.wait()
+            print(f'{m} joined!')
 
-import report_fisherlens_scattering_results
+#import report_fisherlens_scattering_results
