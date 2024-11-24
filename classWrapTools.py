@@ -352,7 +352,7 @@ def class_generate_data(cosmo,
         if dcode['non linear'] == 'hmcode' and 'c_min' in list(cosmo.keys()):
             cosmoclass['c_min'] = cosmo['c_min']
     dcode['l_max_scalars'] = lmax
-    dcode['delta_l_max'] = 5000-lmax
+    dcode['delta_l_max'] = 500
     dcode['delta_dl_max'] = 0
     dcode['format'] = 'class_delens'
     dcode['accurate_lensing'] = 1
@@ -403,7 +403,7 @@ def class_generate_data(cosmo,
 
     if deflectionNoise is None:
         ##  If deflection noise is not provided, use iterative delensing
-        dcode['delensing'] = 'iterative'
+        dcode['delensing'] = 'no' # iterative
         dcode['lensing reconstruction noise spectra type'] = 'internal'
         dcode['noise_iteration_type'] = 'diag'
         dcode['min_varr_type']  = 'diag'
@@ -417,7 +417,7 @@ def class_generate_data(cosmo,
             dcode['recon_mask_lmin_B'] = reconstructionMask['lmin_B'] if 'lmin_B' in reconstructionMask.keys() else 0
             dcode['recon_mask_lmax_B'] = reconstructionMask['lmax_B'] if 'lmax_B' in reconstructionMask.keys() else 30000
     else:
-        dcode['delensing'] = 'yes'
+        dcode['delensing'] = 'no' # yes
         dcode['lensing reconstruction noise spectra type'] = 'external'
         ##  Write file containing deflection noise, assuming deflectionNoise is array of NLdd at every L starting from 2
         np.savetxt(classDataDir  + 'input/' + rootName + '_defl_noise.dat', np.column_stack((np.arange(len(deflectionNoise))+2, deflectionNoise)) )

@@ -16,6 +16,7 @@ def float_to_latex(f):
     return fr"{round(fman(f), 1)} \times 10^{{{fexp(f)}}}"
 
 data = [["" for _ in range(3)] for _ in range(10)]
+numdata = [[0 for _ in range(3)] for _ in range(10)]
 #print(data)
 for mi, m in enumerate(range(-6, 4)):
     for ni, n in enumerate((0,2,4)):
@@ -29,13 +30,14 @@ for mi, m in enumerate(range(-6, 4)):
                 fish[4, 4] = 1 / 0.0074 ** 2
             cov = np.linalg.inv(fish) / f_sky
             data[mi][ni] = float_to_latex(np.sqrt(cov[-1, -1]) * 2)
+            numdata[mi][ni] = np.sqrt(cov[-1, -1]) * 2
             #print(mi, ni, m, n, data[mi][ni])
             #print(f'm = 10^{m} GeV\tn = {n}\tσ <=', float_to_latex(, 'cm^2')
             covs.append(cov)
         except:
             print(f'Skipping m = 10^{m} GeV, n = {n}')
 
-print(data)
+print(numdata)
 
 #print(data)
 def make_table(row_names, col_names, data_2d_array):

@@ -14,8 +14,8 @@ size = 1
 PLANCK_ONLY = False # DONT USE
 DRAFT_PLANCK = False # DONT USE
 
-DRAFT_ONLY = True
-CV = False
+DRAFT_ONLY = False
+CV = True
 
 # PLANCK_ONLY uses Zack's parameters for TT and EE and the delensing noise is computed iteratively by class_delens
 # CV is 0 for all, including delensing noise 
@@ -23,8 +23,8 @@ CV = False
 # DRAFT_ONLY uses DRAFT
 
 # CHOOSE DM MODEL HERE
-ANN = False
-SCATTER = True
+ANN = True
+SCATTER = False
 DECAY = False
 
 
@@ -111,7 +111,7 @@ if ANN:
                 #'r'   : 0.001, \
                 #'n_t' : cosmoFid['n_t'], \
                 #'Yhe' : 0.0048,
-                'pann': float(sys.argv[-1])/9e16#1.0e-8/9e16
+                'pann': 1.0e-8/9e16#float(sys.argv[-1])/9e16#1.0e-8/9e16
                 }
 elif DECAY:
     print('Calculating with decay...')
@@ -186,12 +186,13 @@ reconstructionMask['lmax_T'] = lmaxTT
 #extra_params['output_spectra_noise'] = 'no'
 #extra_params['write warnings'] = 'y'
 extra_params['delta_l_max'] = delta_l_max
+"""
 if SCATTER:
-    fileBase += '_m' + str(extra_params['log10m_dmeff']) + '_n' + str(extra_params['npow_dmeff']) + '_s' + str(np.abs(round(np.log10(float(sys.argv[-1])), 1)))
+    fileBase += '_m' + str(extra_params['log10m_dmeff']) + '_n' + str(extra_params['npow_dmeff']) + '_s' + str(np.abs(round(np.log10(float(sys.argv[-1])), 5)))
 if ANN:
-    fileBase += '_p' + str(np.abs(np.floor(np.log10(float(sys.argv[-1])))))
+    fileBase += '_p' + str(np.abs(round(np.log10(float(sys.argv[-1])), 5)))
 if DECAY:
-    fileBase += '_g' + str(np.abs(np.floor(np.log10(float(sys.argv[-1])))))
+    fileBase += '_g' + str(np.abs(round(np.log10(float(sys.argv[-1])), 5)))"""
 
 
 # Specify \ells to keep when performing Fisher matrix sum

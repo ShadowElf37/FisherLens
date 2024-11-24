@@ -37,14 +37,16 @@ step_table = {
     (3, 4): 12,
 }
 
-f_sky = 0.4
+f_sky = 0.6
 TAU_PRIOR = True
 
 mode = 2
 constraints = []
 
+rng = np.arange(-12, -5, 0.1)
+
 if mode == 1:
-    for ss_exp in range(-15, -5):
+    for ss_exp in rng:
         try:
             cmd = ['python', 'fisherGenerateDataClass_example.py', str(10**ss_exp)]
             print(' '.join(cmd))
@@ -54,8 +56,8 @@ if mode == 1:
             print(e)
         #print(f'{m} joined!')
 elif mode == 2:
-    for ss_exp in range(-15, -5):
-        f = f'ann_p{str(abs(float(ss_exp)))}'
+    for ss_exp in rng:
+        f = f'ann_p{str(round(abs(float(ss_exp)), 5))}'
         try:
             print(f'{f}.pkl')
             fish = np.load(f'CLASS_delens/results/{f}.pkl', allow_pickle=True)['fisherGaussian']['delensed']
@@ -68,9 +70,9 @@ elif mode == 2:
         except:
             print(f'Skipping 10^{ss_exp}')
     print(constraints)
-    plot.loglog(10.**np.array(list(range(-15, -5)))/9e16, constraints)
+    plot.loglog(10.**np.array(list(rng)), np.array(constraints)*9e16)
     plot.xlabel('Step Size in Derivative')
     plot.ylabel('Constraint from Forecast')
-    plot.axhline(y=1e-6/9e16, color='r', linestyle='--')
+    plot.axhline(y=1e-6, color='r', linestyle='--')
     plot.legend(['CMB-S4 (Fisher)', 'Planck'])
     plot.show()
